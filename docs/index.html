@@ -1,0 +1,33 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Reading an 824 rejection: which segment, which element, what to fix</title>
+<meta name="description" content="How to read an X12 824 Application Advice: AK1/AK2 group and transaction references, AK3 segment note, AK4 element note, AK5 and AK9 acceptance codes, and the fix order.">
+<link rel="canonical" href="https://doteyeso-ops.github.io/edi-824-rejection-codes/">
+<style>
+ body{margin:0;background:#f2ece0;color:#191610;font:17px/1.62 Georgia,'Iowan Old Style',serif}
+ .sheet{max-width:760px;margin:0 auto;padding:56px 28px 90px}
+ .k{font:11px/1 ui-monospace,Menlo,monospace;letter-spacing:.18em;text-transform:uppercase;color:#8a7f6a}
+ h1{font-size:44px;line-height:1.06;letter-spacing:-.02em;font-weight:500;margin:14px 0 0}
+ .lede{font-size:20px;color:#4b4437;margin:18px 0 0}
+ h2{font-size:22px;margin:46px 0 10px;font-weight:500}
+ .f{border-top:1px solid #c9bda4;padding:14px 0}
+ .f span{font:11px/1 ui-monospace,Menlo,monospace;letter-spacing:.16em;text-transform:uppercase;color:#8a7f6a}
+ .f p{margin:6px 0 0}
+ ol{padding-left:22px} li{margin:10px 0}
+ details{border-top:1px solid #c9bda4;padding:12px 0} summary{cursor:pointer}
+ .cta{border:1px solid #191610;padding:18px 20px;margin:38px 0 0;background:#fbf7ec}
+ .cta a{color:#a2311a}
+ footer{margin-top:54px;font:12px/1.5 ui-monospace,Menlo,monospace;color:#6f6656}
+</style></head><body><div class="sheet">
+<div class="k">X12 824 Application Advice</div>
+<h1>Reading an 824 rejection: which segment, which element, what to fix</h1>
+<p class="lede">An 824 is not an error message. It is a structured rejection with a location, and most small suppliers read it as 'the system is broken'.</p>
+<p>A retailer rejects an EDI document and sends back an 824. The supplier sees a wall of segments and concludes the system is broken, then re-sends the same file. The 824 already names the transaction, the segment position, the element position and the kind of syntax error. Reading it takes ten minutes; guessing takes a week.</p>
+<h2>The numbers that decide it</h2><div class='f'><span>AK1 / AK2 locate it</span><p>AK1 answers the functional group (which document type, which group control number). AK2 answers the individual transaction set, so you know whether one order or all of them failed.</p></div><div class='f'><span>AK3 is the segment</span><p>AK301 names the segment ID, AK302 gives its position in the transaction set, and AK304 carries the syntax error code. This is the first thing to read - it puts you on a line.</p></div><div class='f'><span>AK4 is the element</span><p>Inside that segment, AK401 gives the element position and AK403 the error code: missing mandatory element, too long, too short, invalid character, invalid code value, exclusion condition violated. That is the actual fix instruction.</p></div><div class='f'><span>AK5 / AK9 are the verdict</span><p>AK5 says whether that transaction set was accepted, accepted with errors, or rejected; AK9 gives the same verdict for the whole group with counts of included, received and accepted sets. Two transactions failing out of forty is a mapping bug; all forty is a transport or envelope problem.</p></div><div class='f'><span>The fix order matters</span><p>Fix one segment, re-send one document. Batch-fixing five segments and re-sending the file is how a supplier loses three days and cannot tell which change worked.</p></div>
+<h2>How to do it, in order</h2><ol><li><b>Read AK9 first.</b> One transaction rejected or all of them? That single answer decides whether you are debugging a map or a connection.</li><li><b>Then AK3 and AK4.</b> Segment position plus element position is the line and the field. Write those two numbers down before touching anything.</li><li><b>Compare against the retailer's guide, not the X12 standard.</b> A field that is optional in the standard is often required in the guide for that sales channel. The guide wins; that is what you are being validated against.</li><li><b>Change one thing and re-send one document.</b> Keep a note of segment/element/code for each attempt - after three rounds you will see the pattern, and the pattern is usually the same missing qualifier.</li><li><b>Fix the label last.</b> If the 856 was accepted but the load did not update, the problem is usually the physical label or the pack hierarchy, not the EDI file.</li></ol>
+<h2>Questions</h2><details><summary>What does an 824 mean in plain English?</summary><p>The retailer received your document and is telling you what it did with it, field by field. It is an application-level response, not a transport failure - the file arrived.</p></details><details><summary>Why does the same file work at one retailer and fail at another?</summary><p>The X12 standard is the floor, not the contract. Each retailer's guide adds mandatory segments and restricts code values per sales channel.</p></details><details><summary>Do I need a VAN to read an 824?</summary><p>No. The 824 sits in the same mailbox/AS2 path as the rest of the traffic; reading it is a matter of having the file, not of which provider carried it.</p></details>
+<div class="cta"><p>There is a free 824 decoder that turns a pasted 824 into 'segment, element, error, what to change' with no account, plus a service that reads a retailer's mandate letter and returns the document set, deadline and one fixed monthly price.</p>
+<p><b><a href="https://edirescue.com/edi-824-rejection?utm_source=github&amp;utm_medium=repo&amp;utm_campaign=edi-824-rejection-codes">EDI Rescue</a></b></p>
+<p class="k">Written by the person who built EDI Rescue. The decoder is free; the onboarding service is paid.</p></div>
+<footer>EDI Rescue · retailer EDI onboarding and 824 triage · edirescue.com</footer>
+</div></body></html>
